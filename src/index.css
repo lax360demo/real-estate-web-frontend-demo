@@ -776,6 +776,8 @@ button {
 
   display: flex;
   align-items: center;
+
+  background: #170b28;
 }
 
 
@@ -794,6 +796,9 @@ button {
   object-fit: cover;
 
   z-index: 0;
+
+  will-change: transform;
+  transform: translateZ(0);
 }
 
 

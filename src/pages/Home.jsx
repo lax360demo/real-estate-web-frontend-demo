@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, useState } from "react";
+import { useLayoutEffect, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
@@ -9,6 +9,7 @@ gsap.registerPlugin(ScrollTrigger);
 function Home() {
 
   const heroRef = useRef(null);
+  const videoRef = useRef(null);
 
   const [visitForm, setVisitForm] = useState({
     name: "",
@@ -17,6 +18,20 @@ function Home() {
     date: "",
   });
   const [visitSubmitted, setVisitSubmitted] = useState(false);
+
+  // Guarantee instant video playback without initial delay
+  useEffect(() => {
+    if (videoRef.current) {
+      videoRef.current.defaultMuted = true;
+      videoRef.current.muted = true;
+      const playPromise = videoRef.current.play();
+      if (playPromise !== undefined) {
+        playPromise.catch(() => {
+          // Autoplay was prevented by browser policy
+        });
+      }
+    }
+  }, []);
 
   const handleVisitSubmit = (e) => {
     e.preventDefault();
@@ -215,11 +230,16 @@ function Home() {
         {/* BACKGROUND VIDEO */}
 
         <video
+          ref={videoRef}
           className="hero-video"
           autoPlay
           muted
           loop
           playsInline
+          preload="auto"
+          poster="/images/about-main.jpg"
+          disablePictureInPicture
+          disableRemotePlayback
         >
 
           <source
