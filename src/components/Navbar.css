@@ -1,0 +1,698 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap');
+
+
+/* =========================================
+   GLOBAL RESET
+========================================= */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: "DM Sans", sans-serif;
+  background: #faf8fc;
+  color: #17121d;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+button {
+  font-family: inherit;
+}
+
+
+/* =========================================
+   COLOR SYSTEM
+========================================= */
+
+:root {
+  --purple-dark: #12091c;
+  --purple-deep: #1b0d29;
+  --purple-dark-2: #241036;
+
+  --purple: #6d3fa3;
+  --purple-main: #7c4db3;
+
+  --violet: #8b5cf6;
+  --violet-light: #a78bfa;
+
+  --lavender: #c4a7e7;
+  --lavender-light: #e9ddf7;
+
+  --white: #ffffff;
+  --text-dark: #17121d;
+}
+
+
+/* =========================================
+   NAVBAR
+========================================= */
+
+.navbar {
+  position: fixed;
+
+  top: 0;
+  left: 0;
+
+  width: 100%;
+  height: 82px;
+
+  z-index: 1000;
+
+  background:
+    linear-gradient(
+      90deg,
+      rgba(18, 9, 28, 0.98),
+      rgba(38, 17, 57, 0.96),
+      rgba(18, 9, 28, 0.98)
+    );
+
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+
+  border-bottom: 1px solid rgba(167, 139, 250, 0.15);
+
+  box-shadow:
+    0 8px 35px rgba(35, 12, 55, 0.20);
+
+  transition: all 0.3s ease;
+}
+
+
+/* =========================================
+   NAVBAR CONTAINER
+========================================= */
+
+.navbar-container {
+  width: min(1380px, 92%);
+
+  height: 100%;
+
+  margin: auto;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: space-between;
+}
+
+
+/* =========================================
+   LOGO
+   IMAGE FROM PUBLIC/LOGO
+========================================= */
+
+.navbar-logo {
+  display: flex;
+
+  align-items: center;
+
+  gap: 12px;
+
+  color: #fff;
+
+  flex-shrink: 0;
+
+  transition:
+    transform 0.3s ease;
+}
+
+.navbar-logo:hover {
+  transform: translateY(-1px);
+}
+
+
+/* =========================================
+   LOGO IMAGE
+========================================= */
+
+.site-logo {
+  width: 52px;
+  height: 52px;
+
+  object-fit: contain;
+
+  display: block;
+
+  flex-shrink: 0;
+
+  transition:
+    transform 0.3s ease,
+    filter 0.3s ease;
+}
+
+.navbar-logo:hover .site-logo {
+  transform: scale(1.04);
+
+  filter:
+    drop-shadow(
+      0 0 12px
+      rgba(139, 92, 246, 0.40)
+    );
+}
+
+
+/* =========================================
+   BRAND TEXT
+========================================= */
+
+.logo-text {
+  display: flex;
+
+  flex-direction: column;
+
+  line-height: 1;
+}
+
+.logo-text strong {
+  font-family: "Playfair Display", serif;
+
+  font-size: 17px;
+
+  font-weight: 600;
+
+  letter-spacing: 3px;
+
+  color: #ffffff;
+}
+
+.logo-text small {
+  margin-top: 5px;
+
+  font-size: 7px;
+
+  font-weight: 500;
+
+  letter-spacing: 3px;
+
+  color: var(--violet-light);
+}
+
+
+/* =========================================
+   NAVIGATION
+========================================= */
+
+.nav-menu {
+  display: flex;
+
+  align-items: center;
+
+  gap: 34px;
+}
+
+
+/* =========================================
+   NAV LINKS
+========================================= */
+
+.nav-link {
+  position: relative;
+
+  color: rgba(255, 255, 255, 0.72);
+
+  font-size: 13px;
+
+  font-weight: 300;
+
+  letter-spacing: 0.3px;
+
+  padding: 31px 0;
+
+  transition:
+    color 0.3s ease,
+    transform 0.3s ease;
+}
+
+.nav-link:hover {
+  color: #ffffff;
+
+  transform: translateY(-1px);
+}
+
+.nav-link.active {
+  color: #ffffff;
+  font-weight: 300;
+}
+
+
+/* =========================================
+   ACTIVE PURPLE LINE
+========================================= */
+
+.nav-link::after {
+  content: "";
+
+  position: absolute;
+
+  left: 50%;
+
+  bottom: 21px;
+
+  width: 0;
+
+  height: 2px;
+
+  background:
+    linear-gradient(
+      90deg,
+      var(--purple),
+      var(--violet)
+    );
+
+  border-radius: 10px;
+
+  transform: translateX(-50%);
+
+  box-shadow:
+    0 0 10px rgba(139, 92, 246, 0.65);
+
+  transition:
+    width 0.3s ease;
+}
+
+.nav-link:hover::after {
+  width: 22px;
+}
+
+
+/* =========================================
+   CTA BUTTON
+========================================= */
+
+.nav-cta {
+  display: flex;
+
+  align-items: center;
+
+  gap: 12px;
+
+  padding: 12px 18px;
+
+  background:
+    linear-gradient(
+      135deg,
+      var(--purple),
+      var(--violet)
+    );
+
+  border:
+    1px solid
+    rgba(196, 167, 231, 0.35);
+
+  color: #ffffff;
+
+  font-size: 12px;
+
+  font-weight: 600;
+
+  letter-spacing: 0.5px;
+
+  border-radius: 3px;
+
+  box-shadow:
+    0 8px 25px
+    rgba(109, 63, 163, 0.20);
+
+  transition:
+    all 0.3s ease;
+}
+
+.nav-cta:hover {
+  background:
+    linear-gradient(
+      135deg,
+      var(--violet),
+      var(--violet-light)
+    );
+
+  border-color:
+    var(--violet-light);
+
+  color: #ffffff;
+
+  transform:
+    translateY(-2px);
+
+  box-shadow:
+    0 12px 32px
+    rgba(139, 92, 246, 0.35);
+}
+
+
+/* =========================================
+   CTA ARROW
+========================================= */
+
+.cta-arrow {
+  font-size: 17px;
+
+  transition:
+    transform 0.3s ease;
+}
+
+.nav-cta:hover .cta-arrow {
+  transform:
+    translate(3px, -3px);
+}
+
+
+/* =========================================
+   MOBILE CTA
+========================================= */
+
+.mobile-cta {
+  display: none;
+}
+
+
+/* =========================================
+   MOBILE MENU BUTTON
+========================================= */
+
+.menu-toggle {
+  display: none;
+
+  width: 42px;
+  height: 42px;
+
+  border:
+    1px solid
+    rgba(196, 167, 231, 0.20);
+
+  background:
+    rgba(124, 77, 179, 0.08);
+
+  cursor: pointer;
+
+  align-items: center;
+
+  justify-content: center;
+
+  flex-direction: column;
+
+  gap: 5px;
+
+  border-radius: 3px;
+
+  transition:
+    all 0.3s ease;
+}
+
+.menu-toggle:hover {
+  border-color:
+    rgba(167, 139, 250, 0.50);
+
+  background:
+    rgba(139, 92, 246, 0.12);
+}
+
+.menu-toggle span {
+  width: 19px;
+
+  height: 1px;
+
+  background: #ffffff;
+
+  transition:
+    all 0.3s ease;
+}
+
+
+/* =========================================
+   HAMBURGER ANIMATION
+========================================= */
+
+.menu-toggle.open span:nth-child(1) {
+  transform:
+    translateY(6px)
+    rotate(45deg);
+}
+
+.menu-toggle.open span:nth-child(2) {
+  opacity: 0;
+}
+
+.menu-toggle.open span:nth-child(3) {
+  transform:
+    translateY(-6px)
+    rotate(-45deg);
+}
+
+
+/* =========================================
+   TABLET
+========================================= */
+
+@media (max-width: 1050px) {
+
+  .nav-menu {
+    gap: 20px;
+  }
+
+  .nav-link {
+    font-size: 12px;
+  }
+
+  .nav-cta {
+    padding: 10px 14px;
+  }
+}
+
+
+/* =========================================
+   MOBILE
+========================================= */
+
+@media (max-width: 850px) {
+
+  .navbar {
+    height: 72px;
+  }
+
+  .navbar-container {
+    width: 90%;
+  }
+
+
+  /* Hide desktop CTA */
+
+  .navbar-container > .nav-cta {
+    display: none;
+  }
+
+
+  /* Show hamburger */
+
+  .menu-toggle {
+    display: flex;
+  }
+
+
+  /* =========================================
+     MOBILE NAVIGATION
+  ========================================= */
+
+  .nav-menu {
+    position: absolute;
+
+    top: 72px;
+
+    left: 0;
+
+    width: 100%;
+
+    padding:
+      25px
+      7%
+      30px;
+
+    background:
+      linear-gradient(
+        180deg,
+        rgba(18, 9, 28, 0.99),
+        rgba(29, 13, 44, 0.98)
+      );
+
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+
+    border-top:
+      1px solid
+      rgba(139, 92, 246, 0.15);
+
+    box-shadow:
+      0 20px 40px
+      rgba(15, 5, 25, 0.30);
+
+    display: flex;
+
+    flex-direction: column;
+
+    align-items: flex-start;
+
+    gap: 0;
+
+    opacity: 0;
+
+    visibility: hidden;
+
+    transform:
+      translateY(-15px);
+
+    transition:
+      opacity 0.3s ease,
+      transform 0.3s ease,
+      visibility 0.3s ease;
+  }
+
+  .nav-menu.active {
+    opacity: 1;
+
+    visibility: visible;
+
+    transform:
+      translateY(0);
+  }
+
+
+  /* =========================================
+     MOBILE LINKS
+  ========================================= */
+
+  .nav-link {
+    width: 100%;
+
+    padding: 15px 0;
+
+    font-size: 14px;
+    font-weight: 300;
+
+    border-bottom:
+      1px solid
+      rgba(255, 255, 255, 0.06);
+  }
+
+  .nav-link:hover {
+    color:
+      var(--violet-light);
+
+    transform:
+      translateX(4px);
+  }
+
+  .nav-link::after {
+    display: none;
+  }
+
+
+  /* =========================================
+     MOBILE CTA
+  ========================================= */
+
+  .mobile-cta {
+    display: flex;
+
+    margin-top: 20px;
+
+    width: 100%;
+
+    justify-content: center;
+
+    padding: 14px 18px;
+  }
+}
+
+
+/* =========================================
+   SMALL MOBILE
+========================================= */
+
+@media (max-width: 480px) {
+
+  .navbar {
+    height: 68px;
+  }
+
+  .navbar-container {
+    width: 92%;
+  }
+
+
+  /* =========================================
+     MOBILE LOGO IMAGE
+  ========================================= */
+
+  .site-logo {
+    width: 42px;
+
+    height: 42px;
+  }
+
+
+  /* =========================================
+     BRAND TEXT
+  ========================================= */
+
+  .logo-text strong {
+    font-size: 14px;
+
+    letter-spacing: 2.5px;
+  }
+
+  .logo-text small {
+    font-size: 6px;
+
+    letter-spacing: 2px;
+  }
+
+
+  /* =========================================
+     MENU BUTTON
+  ========================================= */
+
+  .menu-toggle {
+    width: 40px;
+
+    height: 40px;
+  }
+}
+
+
+/* =========================================
+   HOME PAGE OFFSET
+========================================= */
+
+.home {
+  padding-top: 82px;
+}
+
+
+/* =========================================
+   MOBILE HOME OFFSET
+========================================= */
+
+@media (max-width: 850px) {
+
+  .home {
+    padding-top: 72px;
+  }
+}
+
+@media (max-width: 480px) {
+
+  .home {
+    padding-top: 68px;
+  }
+}
