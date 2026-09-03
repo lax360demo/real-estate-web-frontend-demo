@@ -18,6 +18,7 @@ const INITIAL_MOCK_REQUESTS = [
     withdrawalType: "",
     grievanceType: "",
     status: "Pending",
+    isDataPurged: false,
     dpoNotes: "Identity verified via OTP. Compilation of CRM property enquiry history in progress.",
     resolutionDate: null,
     createdAt: "2026-09-02T10:30:00Z",
@@ -37,6 +38,7 @@ const INITIAL_MOCK_REQUESTS = [
     withdrawalType: "",
     grievanceType: "",
     status: "In Progress",
+    isDataPurged: false,
     dpoNotes: "Updated in primary advisory ledger; CRM sync scheduled.",
     resolutionDate: null,
     createdAt: "2026-09-01T14:15:00Z",
@@ -56,6 +58,7 @@ const INITIAL_MOCK_REQUESTS = [
     withdrawalType: "Only Promotional WhatsApp Messages",
     grievanceType: "",
     status: "Resolved",
+    isDataPurged: false,
     dpoNotes: "WhatsApp marketing webhook opted out. Confirmed via SMS dispatch.",
     resolutionDate: "Sep 1, 2026",
     createdAt: "2026-08-31T09:00:00Z",
@@ -74,12 +77,13 @@ const INITIAL_MOCK_REQUESTS = [
     fieldToCorrect: "",
     withdrawalType: "",
     grievanceType: "",
-    status: "Resolved",
-    dpoNotes: "Lead purged from active marketing database. Audit log archived in accordance with RERA statutory retention.",
-    resolutionDate: "Aug 30, 2026",
+    status: "Pending",
+    isDataPurged: false,
+    dpoNotes: "Awaiting DPO permanent data purge authorization.",
+    resolutionDate: null,
     createdAt: "2026-08-29T11:45:00Z",
     formattedDate: "Aug 29, 2026",
-    slaHoursLeft: 0,
+    slaHoursLeft: 18,
   },
   {
     id: "DPDP-GRIEVANCE-2026-5390",
@@ -94,6 +98,7 @@ const INITIAL_MOCK_REQUESTS = [
     withdrawalType: "",
     grievanceType: "Unwanted Marketing Calls / Messages",
     status: "Resolved",
+    isDataPurged: false,
     dpoNotes: "Advisory desk rep reprimanded. Number placed on internal National Do-Not-Call override registry.",
     resolutionDate: "Aug 28, 2026",
     createdAt: "2026-08-28T16:20:00Z",
@@ -102,7 +107,7 @@ const INITIAL_MOCK_REQUESTS = [
   },
 ];
 
-const AUDIT_LOGS = [
+const INITIAL_AUDIT_LOGS = [
   { id: "AUD-891", type: "Cookie Preference Saved", userHash: "IP_2405:201:***:89a1", timestamp: "Today, 12:45 PM", status: "Analytics: ON, Marketing: ON" },
   { id: "AUD-890", type: "Enquiry Form Consent", userHash: "TEL_+91 98401*****", timestamp: "Today, 11:20 AM", status: "Explicit Consent (DPDP Sec 6)" },
   { id: "AUD-889", type: "Site Visit Cab Consent", userHash: "TEL_+91 97890*****", timestamp: "Yesterday, 04:15 PM", status: "Chauffeur Coordination Granted" },
@@ -111,7 +116,8 @@ const AUDIT_LOGS = [
 ];
 
 function AdminPanel() {
-  const [activeTab, setActiveTab] = useState("requests"); // 'dashboard' | 'requests' | 'audits' | 'reports'
+  const [activeTab, setActiveTab] = useState("requests"); // 'dashboard' | 'requests' | 'audits' | 'guidelines'
+  
   const [requests, setRequests] = useState(() => {
     try {
       const stored = localStorage.getItem("lax360_dpdp_requests");
@@ -127,6 +133,23 @@ function AdminPanel() {
       return INITIAL_MOCK_REQUESTS;
     }
   });
+
+  const [auditLogs, setAuditLogs] = useState(() => {
+    try {
+      const stored = localStorage.getItem("lax360_dpdp_audits");
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed;
+        }
+      }
+      localStorage.setItem("lax360_dpdp_audits", JSON.stringify(INITIAL_AUDIT_LOGS));
+      return INITIAL_AUDIT_LOGS;
+    } catch {
+      return INITIAL_AUDIT_LOGS;
+    }
+  });
+
   const [searchQuery, setSearchQuery] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -134,11 +157,12 @@ function AdminPanel() {
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [actionStatus, setActionStatus] = useState("Pending");
   const [dpoNotes, setDpoNotes] = useState("");
+  const [erasureConfirmModal, setErasureConfirmModal] = useState(null);
   const [toastMessage, setToastMessage] = useState(null);
 
   const showToast = (msg) => {
     setToastMessage(msg);
-    setTimeout(() => setToastMessage(null), 3500);
+    setTimeout(() => setToastMessage(null), 3800);
   };
 
   // KPI Calculations
@@ -147,8 +171,9 @@ function AdminPanel() {
     const pending = requests.filter((r) => r.status === "Pending").length;
     const inProgress = requests.filter((r) => r.status === "In Progress").length;
     const resolved = requests.filter((r) => r.status === "Resolved").length;
+    const erasurePending = requests.filter((r) => r.actionId === "erase" && r.status !== "Resolved").length;
     const complianceRate = total > 0 ? Math.round((resolved / total) * 100) : 100;
-    return { total, pending, inProgress, resolved, complianceRate };
+    return { total, pending, inProgress, resolved, erasurePending, complianceRate };
   }, [requests]);
 
   // Filtered requests
@@ -208,13 +233,75 @@ function AdminPanel() {
     setSelectedRequest(null);
   };
 
+  // Handle Permanent Data Erasure
+  const handleConfirmPermanentErasure = (req) => {
+    if (!req) return;
+
+    const formattedNow = new Date().toLocaleDateString("en-IN", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+    const timeNow = new Date().toLocaleTimeString("en-IN", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+
+    // 1. Purge the personal data in requests list
+    const updated = requests.map((item) => {
+      if (item.id === req.id) {
+        return {
+          ...item,
+          name: `${item.name.replace(" (DATA PURGED)", "")} (DATA PURGED)`,
+          phone: "+91 ***** [PURGED]",
+          email: "[PURGED@dpdp-erased.local]",
+          details: "[PERSONAL IDENTIFIABLE INFORMATION PERMANENTLY ERASED FROM ALL ACTIVE MARKETING AND CRM DATABASES AS PER DPDP ACT 2023]",
+          status: "Resolved",
+          isDataPurged: true,
+          dpoNotes: `User personal data permanently purged on ${formattedNow} at ${timeNow} by DPO. Statutory audit certificate DPDP-PURGE-${req.trackingId} recorded.`,
+          resolutionDate: formattedNow,
+          slaHoursLeft: 0,
+        };
+      }
+      return item;
+    });
+
+    setRequests(updated);
+    try {
+      localStorage.setItem("lax360_dpdp_requests", JSON.stringify(updated));
+    } catch {
+      // fallback
+    }
+
+    // 2. Append permanent erasure audit entry
+    const newAuditEntry = {
+      id: `AUD-${Math.floor(100 + Math.random() * 900)}`,
+      type: "Permanent Data Erasure (Right to Forget)",
+      userHash: `PURGED_${req.trackingId}`,
+      timestamp: `Today, ${timeNow}`,
+      status: "Personal Records & Contact Data Permanently Purged",
+    };
+
+    const updatedAudits = [newAuditEntry, ...auditLogs];
+    setAuditLogs(updatedAudits);
+    try {
+      localStorage.setItem("lax360_dpdp_audits", JSON.stringify(updatedAudits));
+    } catch {
+      // fallback
+    }
+
+    showToast(`User data for ${req.name} (${req.trackingId}) has been permanently deleted!`);
+    setErasureConfirmModal(null);
+    setSelectedRequest(null);
+  };
+
   // Export CSV Report
   const handleExportCSV = () => {
-    const headers = "Tracking ID,Request Type,Data Principal,Phone,Email,Status,Date Filed,DPO Notes\n";
+    const headers = "Tracking ID,Request Type,Data Principal,Phone,Email,Status,Is Purged,Date Filed,DPO Notes\n";
     const rows = requests
       .map(
         (r) =>
-          `"${r.trackingId}","${r.actionTitle}","${r.name}","${r.phone}","${r.email}","${r.status}","${r.formattedDate}","${(r.dpoNotes || "").replace(/"/g, '""')}"`
+          `"${r.trackingId}","${r.actionTitle}","${r.name}","${r.phone}","${r.email}","${r.status}","${r.isDataPurged ? "YES" : "NO"}","${r.formattedDate}","${(r.dpoNotes || "").replace(/"/g, '""')}"`
       )
       .join("\n");
 
@@ -295,11 +382,11 @@ function AdminPanel() {
             </div>
 
             <div className="admin-kpi-card">
-              <div className="kpi-icon-wrap icon-blue">⚙️</div>
+              <div className="kpi-icon-wrap icon-blue">🗑️</div>
               <div className="kpi-data">
-                <span className="kpi-label">In Progress</span>
-                <strong className="kpi-value">{stats.inProgress}</strong>
-                <span className="kpi-subtext">Active ledger updates</span>
+                <span className="kpi-label">Erasure Requests</span>
+                <strong className="kpi-value">{stats.erasurePending}</strong>
+                <span className="kpi-subtext">Pending permanent purge</span>
               </div>
             </div>
 
@@ -329,7 +416,7 @@ function AdminPanel() {
               className={`admin-tab-btn ${activeTab === "audits" ? "active" : ""}`}
               onClick={() => setActiveTab("audits")}
             >
-              🛡️ Consent &amp; Cookie Audit Logs
+              🛡️ Consent &amp; Cookie Audit Logs ({auditLogs.length})
             </button>
             <button
               type="button"
@@ -402,7 +489,10 @@ function AdminPanel() {
                           </td>
                           <td>
                             <div className="principal-cell">
-                              <strong>{req.name}</strong>
+                              <strong>
+                                {req.name}
+                                {req.isDataPurged && <span className="purged-badge">PURGED</span>}
+                              </strong>
                               <span>{req.phone}</span>
                               <small>{req.email}</small>
                             </div>
@@ -426,13 +516,25 @@ function AdminPanel() {
                             </span>
                           </td>
                           <td>
-                            <button
-                              type="button"
-                              className="table-action-btn"
-                              onClick={() => handleOpenDetails(req)}
-                            >
-                              Process / Review ➔
-                            </button>
+                            <div className="table-actions-group">
+                              <button
+                                type="button"
+                                className="table-action-btn"
+                                onClick={() => handleOpenDetails(req)}
+                              >
+                                Review ➔
+                              </button>
+                              {req.actionId === "erase" && !req.isDataPurged && (
+                                <button
+                                  type="button"
+                                  className="table-purge-btn"
+                                  onClick={() => setErasureConfirmModal(req)}
+                                  title="Permanently Delete User Data"
+                                >
+                                  🗑️ Delete Data
+                                </button>
+                              )}
+                            </div>
                           </td>
                         </tr>
                       ))
@@ -454,8 +556,8 @@ function AdminPanel() {
             <div className="admin-tab-panel">
               <div className="audit-info-banner">
                 <div>
-                  <h4>Immutable DPDP Consent Audit Trail</h4>
-                  <p>Records of timestamped user consents collected on forms and cookie banners in accordance with Section 6(7) of the DPDP Act 2023.</p>
+                  <h4>Immutable DPDP Consent &amp; Erasure Audit Trail</h4>
+                  <p>Records of timestamped user consents and permanent data erasure certificates in accordance with Section 6(7) &amp; Section 12 of the DPDP Act 2023.</p>
                 </div>
                 <span className="audit-secure-badge">🔒 Tamper-Proof Log</span>
               </div>
@@ -472,7 +574,7 @@ function AdminPanel() {
                     </tr>
                   </thead>
                   <tbody>
-                    {AUDIT_LOGS.map((log) => (
+                    {auditLogs.map((log) => (
                       <tr key={log.id}>
                         <td><strong>{log.id}</strong></td>
                         <td>{log.type}</td>
@@ -497,7 +599,7 @@ function AdminPanel() {
                 </div>
                 <div className="admin-guide-card">
                   <h4>🗑️ Erasure vs. Statutory Retention</h4>
-                  <p>When an Erasure request is processed, marketing data is completely purged. Transactional records mandated by RERA are archived in cold storage.</p>
+                  <p>When an Erasure request is processed, marketing and personal contact data is completely purged. Transactional records mandated by RERA are archived in cold storage.</p>
                 </div>
                 <div className="admin-guide-card">
                   <h4>↩️ Ease of Consent Withdrawal</h4>
@@ -572,6 +674,32 @@ function AdminPanel() {
                 </div>
               </div>
 
+              {/* SPECIAL ERASURE ACTION BLOCK */}
+              {selectedRequest.actionId === "erase" && !selectedRequest.isDataPurged && (
+                <div className="admin-erasure-action-box">
+                  <div className="erasure-box-header">
+                    <span className="erasure-warning-icon">⚠️</span>
+                    <div>
+                      <strong>Data Erasure Action (Right to Forget)</strong>
+                      <p>User has formally requested complete deletion of their personal records and consultation history under DPDP Section 12.</p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    className="admin-erase-purge-btn"
+                    onClick={() => setErasureConfirmModal(selectedRequest)}
+                  >
+                    <span>🗑️ Permanently Delete &amp; Purge User Data</span>
+                  </button>
+                </div>
+              )}
+
+              {selectedRequest.isDataPurged && (
+                <div className="admin-erasure-purged-notice">
+                  <span>✅ Personal records associated with this request have been permanently purged from active systems.</span>
+                </div>
+              )}
+
               {/* ACTION: UPDATE STATUS */}
               <div className="form-field-group">
                 <label htmlFor="actionStatus">Update Processing Status</label>
@@ -615,6 +743,61 @@ function AdminPanel() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* CONFIRMATION MODAL FOR PERMANENT ERASURE */}
+      {erasureConfirmModal && (
+        <div className="dpdp-modal-backdrop" onClick={() => setErasureConfirmModal(null)}>
+          <div className="dpdp-modal-container admin-confirm-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="confirm-modal-icon-wrap">
+              🗑️
+            </div>
+            <h3>Confirm Permanent Data Erasure</h3>
+            <p>
+              Are you sure you want to permanently erase all personal identifiable records for this Data Principal? This action is irreversible under the <strong>Digital Personal Data Protection (DPDP) Act, 2023</strong>.
+            </p>
+
+            <div className="confirm-data-summary">
+              <div>
+                <span>Tracking Code:</span>
+                <strong>{erasureConfirmModal.trackingId}</strong>
+              </div>
+              <div>
+                <span>Data Principal:</span>
+                <strong>{erasureConfirmModal.name}</strong>
+              </div>
+              <div>
+                <span>Contact Phone:</span>
+                <strong>{erasureConfirmModal.phone}</strong>
+              </div>
+              <div>
+                <span>Registered Email:</span>
+                <strong>{erasureConfirmModal.email}</strong>
+              </div>
+              <div>
+                <span>Erasure Scope:</span>
+                <strong style={{ color: "#dc2626" }}>Permanent CRM &amp; Lead Purge</strong>
+              </div>
+            </div>
+
+            <div className="confirm-modal-actions">
+              <button
+                type="button"
+                className="dpdp-btn dpdp-btn-secondary"
+                onClick={() => setErasureConfirmModal(null)}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="btn-danger-confirm"
+                onClick={() => handleConfirmPermanentErasure(erasureConfirmModal)}
+              >
+                Yes, Permanently Delete Data 🗑️
+              </button>
+            </div>
           </div>
         </div>
       )}
