@@ -516,25 +516,13 @@ function AdminPanel() {
                             </span>
                           </td>
                           <td>
-                            <div className="table-actions-group">
-                              <button
-                                type="button"
-                                className="table-action-btn"
-                                onClick={() => handleOpenDetails(req)}
-                              >
-                                Review ➔
-                              </button>
-                              {req.actionId === "erase" && !req.isDataPurged && (
-                                <button
-                                  type="button"
-                                  className="table-purge-btn"
-                                  onClick={() => setErasureConfirmModal(req)}
-                                  title="Permanently Delete User Data"
-                                >
-                                  🗑️ Delete Data
-                                </button>
-                              )}
-                            </div>
+                            <button
+                              type="button"
+                              className="table-action-btn"
+                              onClick={() => handleOpenDetails(req)}
+                            >
+                              Process / Review ➔
+                            </button>
                           </td>
                         </tr>
                       ))
